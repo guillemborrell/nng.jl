@@ -61,6 +61,8 @@ ERROR_CODES = Dict(
     PUB0
     SUB0
     PAIR0
+    REQ0
+    REP0
 end
 
 function _handle_err(err:: Int32)::Int32
@@ -140,6 +142,18 @@ _nng_pair0_open(socket::nng_socket) =
     ccall((:nng_pair0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
 """
+Low level REQ
+"""
+_nng_req0_open(socket::nng_socket) = 
+ccall((:nng_req0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
+
+"""
+Low level REP
+"""
+_nng_rep0_open(socket::nng_socket) =
+ccall((:nng_rep0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
+
+"""
 Low level CLOSE
 """
 _nng_close(socket::nng_socket) = ccall((:nng_close, LIB), Cint, (nng_socket,), socket)
@@ -186,7 +200,9 @@ PULL0 => _nng_pull0_open,
 PUSH0 => _nng_push0_open,
 PUB0 => _nng_pub0_open,
 SUB0 => _nng_sub0_open,
-PAIR0 => _nng_pair0_open
+PAIR0 => _nng_pair0_open,
+REQ0 => _nng_req0_open,
+REP0 => _nng_rep0_open
 )
 
 

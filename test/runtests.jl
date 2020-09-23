@@ -40,8 +40,25 @@ function test_pair()
     return result
 end
 
+function test_req_rep()
+    rep = nng.listen("ipc:///tmp/reqrep.ipc", nng.REP0)
+    req = nng.dial("ipc:///tmp/reqrep.ipc", nng.REQ0)
+
+    nng.send(req, "One way")
+    message = nng.recv(rep)
+
+    nng.send(rep, "The other way")
+    message = nng.recv(req)
+
+    nng.close(rep)
+    nng.close(req)
+
+    return message
+end
+
 @testset "nng.jl" begin
     @test test_push_pull() == "Something"
     @test test_pub_sub() == "Something"
     @test test_pair() == "One way"
+    @test test_req_rep() == "The other way"
 end
