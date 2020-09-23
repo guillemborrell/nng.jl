@@ -1,7 +1,7 @@
 module nng
 
 # Write your package code here.
-const LIB = "libnng.so"
+const LIB ="libnng.so"
 
 mutable struct nng_socket
     id::UInt32
@@ -13,6 +13,50 @@ end
 
 mutable struct nng_dialer
     id::UInt32
+end
+
+mutable struct nng_aio end
+
+ERROR_CODES = Dict(
+1  => "NNG_EINTR",
+2  => "NNG_ENOMEM",
+3  => "NNG_EINVAL",
+4  => "NNG_EBUSY",
+5  => "NNG_ETIMEDOUT",
+6  => "NNG_ECONNREFUSED",
+7  => "NNG_ECLOSED",
+8  => "NNG_EAGAIN",
+9  => "NNG_ENOTSUP",
+10 => "NNG_EADDRINUSE",
+11 => "NNG_ESTATE",
+12 => "NNG_ENOENT",
+13 => "NNG_EPROTO",
+14 => "NNG_EUNREACHABLE",
+15 => "NNG_EADDRINVAL",
+16 => "NNG_EPERM",
+17 => "NNG_EMSGSIZE",
+18 => "NNG_ECONNABORTED",
+19 => "NNG_ECONNRESET",
+20 => "NNG_ECANCELED",
+21 => "NNG_ENOFILES",
+22 => "NNG_ENOSPC",
+23 => "NNG_EEXIST",
+24 => "NNG_EREADONLY",
+25 => "NNG_EWRITEONLY",
+26 => "NNG_ECRYPTO",
+27 => "NNG_EPEERAUTH",
+28 => "NNG_ENOARG",
+29 => "NNG_EAMBIGUOUS",
+30 => "NNG_EBADTYPE",
+31 => "NNG_ECONNSHUT",
+1000 => "NNG_EINTERNAL"
+)
+
+function _handle_err(err:: Int32)::Int32
+    if err != 0
+        throw(error("NNG error: $(ERROR_CODES[err])"))
+    end
+    return err
 end
 
 """
@@ -78,7 +122,7 @@ Low level CLOSE
 _nng_close(socket::nng_socket) = ccall((:nng_close, LIB), Cint, (nng_socket,), socket)
 
 """
-Low level SEND. At this point only sync operation supported
+Low level SEND.
 """
 function _nng_send(socket::nng_socket, message::AbstractString)
     return ccall(
@@ -93,7 +137,7 @@ function _nng_send(socket::nng_socket, message::AbstractString)
 end
 
 """
-Low level RECV. At this point only sync operation supported
+Low level RECV.
 """
 function _nng_recv(socket::nng_socket)
     buf = Vector{Ptr{UInt8}}(undef, 1)
@@ -112,6 +156,45 @@ function _nng_recv(socket::nng_socket)
     ccall((:nng_free, LIB), Cvoid, (Ptr{Cvoid}, Csize_t), buf[1], sizeof(msg))
 
     return msg
+end
+
+function_mapping = Dict{String, Function}(
+"PULL0" => _nng_pull0_open,
+"PUSH0" => _nng_push0_open,
+"PUB0" => _nng_pub0_open,
+"SUB0" => _nng_sub0_open
+)
+
+function listen(addr::String, proto::String)::nng_socket
+    if haskey(function_mapping, proto) == false
+        throw(error("Not one of accepted socket types"))
+    end
+    socket = nng_socket(0)
+    err_val = _handle_err(function_mapping[proto](socket))
+    err_val = _handle_err(_nng_listen(socket, addr))
+    return socket
+end
+
+function dial(addr::String, proto::String)::nng_socket
+    if haskey(function_mapping, proto) == false
+        throw(error("Not one of accepted socket types"))
+    end
+    socket = nng_socket(0)
+    err_val = _handle_err(function_mapping[proto](socket))
+    err_val = _handle_err(_nng_dial(socket, addr))
+    return socket
+end
+
+function close(socket::nng_socket)::Int32
+    return _handle_err(_nng_close(socket))
+end
+
+function send(socket::nng_socket, msg::AbstractString)::Int32
+    return _handle_err(_nng_send(socket, msg))
+end
+
+function recv(socket::nng_socket)::AbstractString
+    return _nng_recv(socket)
 end
 
 end
