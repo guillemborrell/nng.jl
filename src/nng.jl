@@ -17,6 +17,9 @@ end
 
 mutable struct nng_aio end
 
+const NNG_OPT_SUB_SUBSCRIBE = "sub:subscribe"
+const NNG_OPT_SUB_UNSUBSCRIBE = "sub:unsubscribe"
+
 ERROR_CODES = Dict(
 1  => "NNG_EINTR",
 2  => "NNG_ENOMEM",
@@ -75,6 +78,12 @@ _nng_socket_id(socket::nng_socket) =
     ccall((:nng_socket_id, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
 """
+Low level function to set a string as an option
+"""
+_nng_setopt(socket::nng_socket, option::String, value::String) =
+    ccall((:nng_setopt, LIB), Cint, (nng_socket, Cstring, Cstring, Csize_t), socket, option, value, length(value))
+
+"""
 Low level listen
 """
 _nng_listen(socket::nng_socket, url::String) = ccall(
@@ -121,7 +130,7 @@ _nng_pub0_open(socket::nng_socket) =
 Low level SUB
 """
 _nng_sub0_open(socket::nng_socket) =
-    ccall((:nng_psub0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
+    ccall((:nng_sub0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
 """
 Low level CLOSE
@@ -192,8 +201,28 @@ function dial(addr::String, proto::SOCKET_TYPES)::nng_socket
     return socket
 end
 
+function dial(addr::String, proto::SOCKET_TYPES, topic::String)::nng_socket
+    if haskey(function_mapping, proto) == false
+        throw(error("Not one of accepted socket types"))
+    end
+    socket = nng_socket(0)
+    err_val = _handle_err(function_mapping[proto](socket))
+    err_val = _handle_err(_nng_setopt(socket, NNG_OPT_SUB_SUBSCRIBE, topic))
+    err_val = _handle_err(_nng_dial(socket, addr))
+    return socket
+end
+
+
 function close(socket::nng_socket)::Int32
     return _handle_err(_nng_close(socket))
+end
+
+function subscribe(socket::nng_socket, topic::String)::Int32
+    return _handle_err(_nng_setopt(socket, NNG_OPT_SUB_SUBSCRIBE, topic))
+end
+
+function unsubscribe(socket::nng_socket, topic::String)::Int32
+    return _handle_err(_nng_setopt(socket, NNG_OPT_SUB_UNSUBSCRIBE, topic))
 end
 
 function send(socket::nng_socket, msg::AbstractString)::Int32
