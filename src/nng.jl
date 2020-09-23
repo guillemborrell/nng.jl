@@ -52,6 +52,13 @@ ERROR_CODES = Dict(
 1000 => "NNG_EINTERNAL"
 )
 
+@enum SOCKET_TYPES begin
+    PUSH0
+    PULL0
+    PUB0
+    SUB0
+end
+
 function _handle_err(err:: Int32)::Int32
     if err != 0
         throw(error("NNG error: $(ERROR_CODES[err])"))
@@ -158,14 +165,14 @@ function _nng_recv(socket::nng_socket)
     return msg
 end
 
-function_mapping = Dict{String, Function}(
-"PULL0" => _nng_pull0_open,
-"PUSH0" => _nng_push0_open,
-"PUB0" => _nng_pub0_open,
-"SUB0" => _nng_sub0_open
+function_mapping = Dict{SOCKET_TYPES, Function}(
+PULL0 => _nng_pull0_open,
+PUSH0 => _nng_push0_open,
+PUB0 => _nng_pub0_open,
+SUB0 => _nng_sub0_open
 )
 
-function listen(addr::String, proto::String)::nng_socket
+function listen(addr::String, proto::SOCKET_TYPES)::nng_socket
     if haskey(function_mapping, proto) == false
         throw(error("Not one of accepted socket types"))
     end
@@ -175,7 +182,7 @@ function listen(addr::String, proto::String)::nng_socket
     return socket
 end
 
-function dial(addr::String, proto::String)::nng_socket
+function dial(addr::String, proto::SOCKET_TYPES)::nng_socket
     if haskey(function_mapping, proto) == false
         throw(error("Not one of accepted socket types"))
     end
