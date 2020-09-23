@@ -73,6 +73,23 @@ function test_surveyor_respondent()
     return message
 end
 
+function test_bus()
+    bus1 = nng.listen("ipc:///tmp/bus1.ipc", nng.BUS0)
+    bus2 = nng.listen("ipc:///tmp/bus2.ipc", nng.BUS0)
+    sleep(1)
+
+    bus1 = nng.dial(bus1, "ipc:///tmp/bus2.ipc")
+    bus2 = nng.dial(bus2, "ipc:///tmp/bus1.ipc")
+    sleep(1)
+
+    nng.send(bus1, "One way")
+    message = nng.recv(bus2)
+
+    nng.close(bus1)
+    nng.close(bus2)
+
+    return message
+end
 
 @testset "nng.jl" begin
     @test test_push_pull() == "Something"
@@ -80,4 +97,5 @@ end
     @test test_pair() == "One way"
     @test test_req_rep() == "The other way"
     @test test_surveyor_respondent() == "The other way"
+    @test test_bus() == "One way"
 end

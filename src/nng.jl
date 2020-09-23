@@ -65,6 +65,7 @@ ERROR_CODES = Dict(
     REP0
     SURVEYOR0
     RESPONDENT0
+    BUS0
 end
 
 function _handle_err(err:: Int32)::Int32
@@ -167,6 +168,11 @@ Low level RESPONDENT
 _nng_respondent0_open(socket::nng_socket) =
 ccall((:nng_respondent0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
+"""
+Low level BUS
+"""
+_nng_bus0_open(socket::nng_socket) =
+ccall((:nng_bus0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
 """
 Low level CLOSE
@@ -219,7 +225,8 @@ PAIR0 => _nng_pair0_open,
 REQ0 => _nng_req0_open,
 REP0 => _nng_rep0_open,
 SURVEYOR0 => _nng_surveyor0_open,
-RESPONDENT0 => _nng_respondent0_open
+RESPONDENT0 => _nng_respondent0_open,
+BUS0 => _nng_bus0_open
 )
 
 
@@ -264,6 +271,15 @@ function dial(addr::String, proto::SOCKET_TYPES, topic::String)::nng_socket
     err_val = _handle_err(_nng_dial(socket, addr))
     return socket
 end
+
+"""
+NNG dial with a socket
+"""
+function dial(socket::nng_socket, addr::String)::nng_socket
+    err_val = _handle_err(_nng_dial(socket, addr))
+    return socket
+end
+
 
 """
 NNG close a socket
