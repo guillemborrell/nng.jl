@@ -18,7 +18,7 @@ function test_pub_sub()
     sub_s = nng.dial("ipc:///tmp/pub.ipc", nng.SUB0, "") # Subscribe to all topics
 
     nng.send(pub_s, "Something")
-    sleep(1)  #Enough time for the sub socket to start
+    sleep(0.2)  #Enough time for the sub socket to start
     result = nng.recv(sub_s)
 
     nng.close(pub_s)
@@ -26,7 +26,22 @@ function test_pub_sub()
     return result
 end
 
+function test_pair()
+    pair_1 = nng.listen("ipc:///tmp/pair.ipc", nng.PAIR0)
+    pair_2 = nng.dial("ipc:///tmp/pair.ipc", nng.PAIR0)
+
+    nng.send(pair_1, "One way")
+    sleep(0.2)
+    result = nng.recv(pair_2)
+
+    nng.close(pair_1)
+    nng.close(pair_2)
+    
+    return result
+end
+
 @testset "nng.jl" begin
     @test test_push_pull() == "Something"
     @test test_pub_sub() == "Something"
+    @test test_pair() == "One way"
 end

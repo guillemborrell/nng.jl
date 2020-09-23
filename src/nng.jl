@@ -60,6 +60,7 @@ ERROR_CODES = Dict(
     PULL0
     PUB0
     SUB0
+    PAIR0
 end
 
 function _handle_err(err:: Int32)::Int32
@@ -133,6 +134,12 @@ _nng_sub0_open(socket::nng_socket) =
     ccall((:nng_sub0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
 
 """
+Low level PAIR
+"""
+_nng_pair0_open(socket::nng_socket) = 
+    ccall((:nng_pair0_open, LIB), Cint, (Ref{nng_socket},), Ref(socket))
+
+"""
 Low level CLOSE
 """
 _nng_close(socket::nng_socket) = ccall((:nng_close, LIB), Cint, (nng_socket,), socket)
@@ -178,9 +185,14 @@ function_mapping = Dict{SOCKET_TYPES, Function}(
 PULL0 => _nng_pull0_open,
 PUSH0 => _nng_push0_open,
 PUB0 => _nng_pub0_open,
-SUB0 => _nng_sub0_open
+SUB0 => _nng_sub0_open,
+PAIR0 => _nng_pair0_open
 )
 
+
+"""
+NNG listen to a socket for other connections
+"""
 function listen(addr::String, proto::SOCKET_TYPES)::nng_socket
     if haskey(function_mapping, proto) == false
         throw(error("Not one of accepted socket types"))
@@ -191,6 +203,10 @@ function listen(addr::String, proto::SOCKET_TYPES)::nng_socket
     return socket
 end
 
+
+"""
+NNG dial to a socket
+"""
 function dial(addr::String, proto::SOCKET_TYPES)::nng_socket
     if haskey(function_mapping, proto) == false
         throw(error("Not one of accepted socket types"))
@@ -201,6 +217,10 @@ function dial(addr::String, proto::SOCKET_TYPES)::nng_socket
     return socket
 end
 
+
+"""
+NNG dial to a socket and subscribe to a topic
+"""
 function dial(addr::String, proto::SOCKET_TYPES, topic::String)::nng_socket
     if haskey(function_mapping, proto) == false
         throw(error("Not one of accepted socket types"))
@@ -212,23 +232,38 @@ function dial(addr::String, proto::SOCKET_TYPES, topic::String)::nng_socket
     return socket
 end
 
-
+"""
+NNG close a socket
+"""
 function close(socket::nng_socket)::Int32
     return _handle_err(_nng_close(socket))
 end
 
+"""
+NNG subscribe to a topic
+"""
 function subscribe(socket::nng_socket, topic::String)::Int32
     return _handle_err(_nng_setopt(socket, NNG_OPT_SUB_SUBSCRIBE, topic))
 end
 
+"""
+NNG unsubscribe to a topic
+"""
 function unsubscribe(socket::nng_socket, topic::String)::Int32
     return _handle_err(_nng_setopt(socket, NNG_OPT_SUB_UNSUBSCRIBE, topic))
 end
 
+"""
+NNG send an abstract string from a socket
+"""
 function send(socket::nng_socket, msg::AbstractString)::Int32
     return _handle_err(_nng_send(socket, msg))
 end
 
+
+"""
+NNG receive an abstract string to a socket
+"""
 function recv(socket::nng_socket)::AbstractString
     return _nng_recv(socket)
 end
