@@ -1,7 +1,6 @@
 module nng
 
-# Write your package code here.
-const LIB ="libnng.so"
+const LIB ="libnng.so.1"
 
 mutable struct nng_socket
     id::UInt32
