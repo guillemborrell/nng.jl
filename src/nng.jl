@@ -279,7 +279,6 @@ function dial(socket::nng_socket, addr::String)::nng_socket
     return socket
 end
 
-
 """
 NNG close a socket
 """
