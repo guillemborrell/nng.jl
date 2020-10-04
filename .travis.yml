@@ -11,7 +11,7 @@ os:
 dist:
   - focal
 before_install:
-  - sudo apt-get -y libnng1 libnng-dev
+  - sudo apt-get install -y libnng1 libnng-dev
 addons:
   apt:
     update: true
