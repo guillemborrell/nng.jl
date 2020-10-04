@@ -8,8 +8,13 @@ julia:
   - nightly
 os:
   - linux
-  - osx
-  - windows
+  dist:
+    - focal
+  before_install:
+    - sudo apt-get -y libnng1 libnng-dev
+  addons:
+    apt:
+      update: true
 arch:
   - x64
   - x86
