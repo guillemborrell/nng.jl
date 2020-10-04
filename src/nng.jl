@@ -100,6 +100,7 @@ _nng_listen(socket::nng_socket, url::String) = ccall(
     Ref(nng_listener(0)),
     0,
 )
+
 """
 Low level dial
 """
