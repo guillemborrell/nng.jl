@@ -1,5 +1,5 @@
 module nng
-
+using nng_jll
 const LIB ="libnng.so.1"
 
 mutable struct nng_socket
