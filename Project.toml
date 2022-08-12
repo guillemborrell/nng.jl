@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+nng_jll = "53193e1d-1121-5463-9373-c3c6ce833a10"
 
 [compat]
 Revise = "3.1"
